@@ -3,7 +3,32 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+ * Sistema de diseño "Bitácora de Campo" — decidido con el usuario a partir de
+ * dos propuestas visuales (ver docs/decisiones-proyecto.md). Zilla Slab para
+ * títulos, Karla para el resto; paleta de fondos blancos con azul de acento.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Karla', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Zilla Slab', ui-serif, Georgia, serif;
+
+    --color-bg: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-2: #f1f3f6;
+    --color-border: #e1e4e9;
+    --color-text: #1e232c;
+    --color-text-muted: #69707b;
+
+    --color-accent: #4d78ae;
+    --color-accent-strong: #3a5f8f;
+    --color-accent-soft: #e7eef7;
+    --color-on-accent: #ffffff;
+
+    --color-good: #2f8f52;
+    --color-good-soft: #e3f5e9;
+    --color-warn: #b9791f;
+    --color-warn-soft: #fbedd3;
+    --color-critical: #c0392b;
+    --color-critical-soft: #fbe4e1;
 }

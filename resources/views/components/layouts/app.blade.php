@@ -9,7 +9,11 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <body class="min-h-screen bg-bg font-sans text-text antialiased">
+        @if (($nav ?? true) && auth()->check())
+            <x-nav-bar />
+        @endif
+
         {{ $slot }}
     </body>
 </html>

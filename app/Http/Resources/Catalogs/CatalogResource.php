@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Http\Resources\Catalogs;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * @property int $id
+ * @property string $description
+ * @property int $configuration_status_id
+ */
+class CatalogResource extends JsonResource
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'description' => $this->description,
+            'active' => $this->isActive(),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+    }
+}
