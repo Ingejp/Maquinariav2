@@ -7,4 +7,5 @@ enum RoleName: string
     case SuperAdmin = 'SUPER ADMIN';
     case Administrador = 'ADMINISTRADOR';
     case Supervisor = 'SUPERVISOR';
+    case SupervisorEsticasa = 'SUPERVISOR ESTICASA';
 }
