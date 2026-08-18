@@ -55,3 +55,32 @@ Hasta ahora, cada verificación manual en navegador creaba un usuario desechable
 - Agregado a `DatabaseSeeder` (corre con `php artisan db:seed` normal, pero el guard de entorno lo hace inofensivo fuera de local).
 
 **Verificado:** login en navegador con `qa_test` contra la BD MySQL real (restaurada en local) funciona correctamente.
+
+---
+
+## 2026-08-18 — RBAC real: permisos por módulo + bug crítico del middleware de Spatie
+
+**Decisión de permisos:** en vez de replicar el patrón legacy de un permiso por combinación URL+verbo (la causa de hallazgo 5.5 — el seeder se olvidaba de generar `delete` y nadie podía borrar nada), se definieron 5 permisos por módulo en `PermissionSeeder`: `catalogs.view`, `catalogs.manage`, `report.create`, `dashboard.view`, `security.manage`. Mucha menos superficie para que un seeder futuro se equivoque.
+
+Asignación por defecto (ajustable después desde la propia pantalla de Seguridad):
+- **SUPER ADMIN**: los 5 (además del bypass de `Gate::before` — se le asignan explícitamente para que la UI no lo muestre como "sin permisos").
+- **ADMINISTRADOR**: los 5.
+- **SUPERVISOR** y **SUPERVISOR ESTICASA**: `catalogs.view`, `report.create`, `dashboard.view` (no `catalogs.manage` ni `security.manage`).
+
+Antes de proteger ninguna ruta se verificó con Tinker que los 7 usuarios reales conservaban el acceso esperado según su rol — para no bloquear a nadie al desplegar esto.
+
+**Bug crítico encontrado y corregido:** al aplicar `middleware('permission:...')` a las rutas, **todas** (incluidas las que ya funcionaban antes, como listar catálogos) empezaron a tirar 500 con `Target class [permission] does not exist`. Causa: en Laravel 11+/13 con `bootstrap/app.php` (sin `Kernel.php`), el alias de middleware `permission` de Spatie **no se auto-registra** — hay que declararlo a mano:
+
+```php
+->withMiddleware(function (Middleware $middleware): void {
+    $middleware->alias([
+        'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+        'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+        'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+    ]);
+})
+```
+
+Se detectó probando con un usuario `SUPERVISOR` real (rol, no Super Admin) vía `curl` con cookies de sesión reales antes de dar por cerrada la protección de rutas — si se hubiera desplegado sin esta prueba, **todos los usuarios reales habrían quedado bloqueados de todo el sistema**, no solo de lo que no debían ver.
+
+**Verificado tras el fix:** con un usuario `SUPERVISOR` de prueba — `catalogs.view`/`dashboard.view`/`report.create` devuelven 200, un intento de `POST` a crear un campo (requiere `catalogs.manage`) devuelve 403 limpio. `qa_test` (SUPER ADMIN) conserva acceso total.
