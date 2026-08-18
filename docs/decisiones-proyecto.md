@@ -42,3 +42,16 @@ Se conectó la app a un respaldo restaurado en local (MySQL, `test_maquinaria`) 
 **Verificado:** migración limpia sin colisiones sobre el respaldo real; los 7 usuarios reales quedaron con su rol de Spatie correcto (`admin → SUPER ADMIN`, `JP → ADMINISTRADOR`, el resto → `SUPERVISOR`); login end-to-end probado en navegador contra la conexión MySQL real (con un usuario de prueba desechable, eliminado después — no se tocaron credenciales reales).
 
 **Nota de seguridad:** se corrigió además un bug en `.env.example`: `SESSION_SECURE_COOKIE=true` estaba activo por defecto, lo cual rompe la sesión en desarrollo local por HTTP (`php artisan serve`). Se dejó comentado con instrucción de activarlo solo en producción bajo HTTPS.
+
+---
+
+## 2026-08-18 — Usuario fijo de QA (`TestUserSeeder`)
+
+Hasta ahora, cada verificación manual en navegador creaba un usuario desechable por Tinker y lo borraba al terminar. Se reemplaza por un usuario fijo y reutilizable: `database/seeders/TestUserSeeder.php`, con rol `SUPER ADMIN` (bypass total vía `Gate::before`).
+
+- Credenciales conocidas (no aleatorias, a diferencia de `AdminUserSeeder`): `TEST_USERNAME`/`TEST_PASSWORD` en `.env` (default `qa_test` / `QaTest#2026!` si no se definen).
+- **Guard de entorno:** solo corre si `app()->environment(['local', 'testing'])` — nunca se crea esta cuenta si el entorno apunta a datos reales de producción, aunque el seeder esté en el repo.
+- `updateOrCreate` en vez de "crear si no existe": correr el seeder de nuevo resetea la contraseña, útil si se necesita recuperar el acceso.
+- Agregado a `DatabaseSeeder` (corre con `php artisan db:seed` normal, pero el guard de entorno lo hace inofensivo fuera de local).
+
+**Verificado:** login en navegador con `qa_test` contra la BD MySQL real (restaurada en local) funciona correctamente.
