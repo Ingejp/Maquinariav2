@@ -5,6 +5,7 @@ use App\Http\Controllers\Catalogs\FieldController;
 use App\Http\Controllers\Catalogs\MachineryController;
 use App\Http\Controllers\Catalogs\MachineryTypeController;
 use App\Http\Controllers\Catalogs\StatusController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Report\ReportController;
 use Illuminate\Support\Facades\Route;
 
@@ -69,4 +70,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/reportar/{any?}', [ReportController::class, 'index'])
         ->where('any', '.*')
         ->name('report.index');
+
+    Route::prefix('dashboard/datos')->name('dashboard.data.')->group(function () {
+        Route::get('/resumen', [DashboardController::class, 'summary'])->name('summary');
+        Route::get('/reportes', [DashboardController::class, 'reports'])->name('reports');
+        Route::get('/grafica', [DashboardController::class, 'chart'])->name('chart');
+    });
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 });
