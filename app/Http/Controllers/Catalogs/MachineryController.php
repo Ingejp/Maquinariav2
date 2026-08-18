@@ -13,7 +13,6 @@ use App\Models\Catalogs\MachineryType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class MachineryController extends Controller
@@ -84,7 +83,7 @@ class MachineryController extends Controller
     {
         $record = Machinery::findOrFail($id);
 
-        $reports = DB::table('report_status')->where('machinery_id', $record->id)->count();
+        $reports = $record->reportStatuses()->count();
 
         if ($reports > 0) {
             return response()->json([

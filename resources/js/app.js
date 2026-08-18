@@ -5,6 +5,11 @@ import { createApp } from 'vue';
 // el componente raíz correspondiente en resources/js/app/pages/<carpeta>/index.vue.
 const pages = import.meta.glob('./app/pages/**/index.vue');
 
+// Si una isla necesita navegación interna (ej. Reportar: Yarda → Tipo →
+// Máquina → Registrar), declara un router.js hermano exportando su propia
+// instancia de Vue Router — no hay router global, cada isla es dueña de la suya.
+const routers = import.meta.glob('./app/pages/**/router.js');
+
 async function mountPage() {
     const el = document.getElementById('app');
     if (!el || !el.dataset.page) {
@@ -22,7 +27,15 @@ async function mountPage() {
     const { default: PageComponent } = await loader();
     const props = el.dataset.props ? JSON.parse(el.dataset.props) : {};
 
-    createApp(PageComponent, props).mount(el);
+    const app = createApp(PageComponent, props);
+
+    const routerLoader = routers[`./app/pages/${page}/router.js`];
+    if (routerLoader) {
+        const { default: router } = await routerLoader();
+        app.use(router);
+    }
+
+    app.mount(el);
 }
 
 mountPage();

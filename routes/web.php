@@ -5,6 +5,7 @@ use App\Http\Controllers\Catalogs\FieldController;
 use App\Http\Controllers\Catalogs\MachineryController;
 use App\Http\Controllers\Catalogs\MachineryTypeController;
 use App\Http\Controllers\Catalogs\StatusController;
+use App\Http\Controllers\Report\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -51,4 +52,21 @@ Route::middleware('auth')->group(function () {
             Route::patch('/{id}/estado', [MachineryController::class, 'toggleStatus'])->name('toggle');
         });
     });
+
+    // Datos JSON del flujo de Reportar — registrados antes del catch-all de
+    // abajo para que no lo intercepte.
+    Route::prefix('reportar/datos')->name('report.data.')->group(function () {
+        Route::get('/yardas', [ReportController::class, 'index'])->name('fields');
+        Route::get('/yardas/{field}/tipos', [ReportController::class, 'machineryTypes'])->name('machinery-types');
+        Route::get('/yardas/{field}/tipos/{machineryType}/maquinas', [ReportController::class, 'machines'])->name('machines');
+        Route::get('/estados', [ReportController::class, 'statuses'])->name('statuses');
+        Route::post('/registrar', [ReportController::class, 'store'])->name('store');
+    });
+
+    // Isla Vue con router interno (Yarda → Tipo → Máquina → Registrar):
+    // cualquier sub-ruta sirve el mismo shell para que recargar la página
+    // en un paso intermedio no rompa (catch-all, va al final).
+    Route::get('/reportar/{any?}', [ReportController::class, 'index'])
+        ->where('any', '.*')
+        ->name('report.index');
 });
