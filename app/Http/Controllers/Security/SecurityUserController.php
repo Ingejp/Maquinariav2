@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class SecurityUserController extends Controller
@@ -37,6 +38,14 @@ class SecurityUserController extends Controller
 
         $user->assignRole($request->string('role')->value());
 
+        // Hallazgo A09 OWASP: registrar altas de usuario (acción sensible).
+        Log::info('Usuario creado', [
+            'actor_id' => auth()->id(),
+            'new_user_id' => $user->id,
+            'username' => $user->username,
+            'role' => $request->string('role')->value(),
+        ]);
+
         return (new SecurityUserResource($user->load('roles')))->response()->setStatusCode(201);
     }
 
@@ -48,6 +57,14 @@ class SecurityUserController extends Controller
 
         // Un solo rol por usuario, igual que el esquema legacy (users.role_id).
         $user->syncRoles([$validated['role']]);
+
+        // Hallazgo A09 OWASP: registrar cambios de rol (acción sensible).
+        Log::info('Rol de usuario actualizado', [
+            'actor_id' => auth()->id(),
+            'target_user_id' => $user->id,
+            'username' => $user->username,
+            'role' => $validated['role'],
+        ]);
 
         return new SecurityUserResource($user->load('roles'));
     }

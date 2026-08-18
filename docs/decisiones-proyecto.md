@@ -84,3 +84,26 @@ Antes de proteger ninguna ruta se verificó con Tinker que los 7 usuarios reales
 Se detectó probando con un usuario `SUPERVISOR` real (rol, no Super Admin) vía `curl` con cookies de sesión reales antes de dar por cerrada la protección de rutas — si se hubiera desplegado sin esta prueba, **todos los usuarios reales habrían quedado bloqueados de todo el sistema**, no solo de lo que no debían ver.
 
 **Verificado tras el fix:** con un usuario `SUPERVISOR` de prueba — `catalogs.view`/`dashboard.view`/`report.create` devuelven 200, un intento de `POST` a crear un campo (requiere `catalogs.manage`) devuelve 403 limpio. `qa_test` (SUPER ADMIN) conserva acceso total.
+
+---
+
+## 2026-08-18 — Fase 6 (Hardening) + Fase 7 (migraciones puntuales): checklist OWASP Top 10:2025
+
+Repaso de la sección 11 del análisis técnico, con el estado real después de Fases 0-6. No se tocó la RDS real ni el dominio/SSL de producción — eso lo hace el usuario al desplegar a pre-producción.
+
+| # | Categoría | Estado |
+|---|---|---|
+| A01 | Broken Access Control | **Resuelto.** RBAC con Spatie, 5 permisos por módulo, aplicados a todas las rutas de negocio, verificado con sesión real no-privilegiada (no solo Super Admin). Deniega por defecto: ruta nueva sin middleware `permission:` explícito queda abierta solo a `auth`, no a todo el mundo. |
+| A02 | Security Misconfiguration | **Resuelto en código.** CORS deshabilitado (`paths => []`, no hay API pública). Headers de seguridad (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, CSP en producción) vía `SecurityHeaders` middleware. `.env.example` documenta `APP_DEBUG=false`/`APP_ENV=production` para el deploy real. **Pendiente del usuario:** que el `.env` de pre-producción realmente tenga esos valores — el código no puede forzarlo. |
+| A03 | Software Supply Chain Failures | **Parcial.** Stack sin EOL (Laravel 13, Vue 3), `composer.lock`/`package-lock.json` comiteados. Sin CI/CD (decisión de alcance) → `composer audit`/`npm audit` quedan como paso manual antes de cada release, no automatizado. No se corrieron en esta sesión — recomendado antes del deploy. |
+| A04 | Cryptographic Failures | **Resuelto.** `MYSQL_ATTR_SSL_CA` para TLS a RDS, `URL::forceScheme('https')` en producción, `SESSION_SECURE_COOKIE` documentado (comentado en local, activar en producción), passwords con cast `hashed` (bcrypt). El certificado SSL del dominio en sí lo gestiona el usuario en el servidor/proxy real. |
+| A05 | Injection | **Resuelto.** Eloquent parametrizado en todo el proyecto; los `DB::raw`/`selectRaw` del Dashboard usan literales fijos (`DATE(...)`), nunca interpolan input de usuario. Vue 3 escapa por defecto, sin `v-html` en ningún componente. |
+| A06 | Insecure Design | **Resuelto.** Decisiones de producto ya cerradas desde Fase 1 (sin registro público, sin recuperación de contraseña, alta solo por admin con password ≥10 caracteres); RBAC rediseñado con 5 permisos simples en vez del patrón legacy por-URL que generaba bugs. |
+| A07 | Authentication Failures | **Resuelto.** Throttling en login (5 intentos/min por usuario+IP vía `LoginRequest`, más `throttle:10,1` a nivel de ruta), regeneración de sesión en login/logout, password mínima de 10 caracteres en altas nuevas. MFA no implementado — mejora opcional, fuera de alcance (así lo marcaba ya el análisis original). |
+| A08 | Software or Data Integrity Failures | **Sin cambios de código — es una práctica operativa.** Despliegue manual (decisión de alcance, sin CI/CD); al desplegar, usar exactamente los mismos `composer.lock`/`package-lock.json` que se probaron, no regenerarlos en el servidor. |
+| A09 | Security Logging and Alerting Failures | **Resuelto.** Se agregó logging explícito (no existía antes) de: intentos de login fallidos (`LoginRequest`), accesos denegados 403 (`SecurityHeaders` middleware — ver nota técnica abajo), y acciones administrativas sensibles (alta de usuario, cambio de rol, cambio de permisos de un rol). Verificado con `curl` que los 3 casos escriben en `storage/logs/laravel.log`. |
+| A10 | Mishandling of Exceptional Conditions | **Resuelto.** `findOrFail`/route-model-binding consistente en todos los controladores desde que se construyeron (Fases 2-5, no fue necesario tocar nada nuevo). Excepciones JSON limpias sin stack trace cuando `APP_DEBUG=false` (comportamiento por defecto de Laravel, ya configurado desde Fase 0 vía `shouldRenderJsonWhen`). |
+
+**Nota técnica sobre A09:** el primer intento de loguear los 403 fue con `$exceptions->report()` sobre `UnauthorizedException` en `bootstrap/app.php` — no funcionó. `UnauthorizedException` (Spatie) extiende `Symfony\HttpException`, y Laravel excluye esa familia del reporte por defecto (la trata como "esperada", no como error real). Se resolvió en cambio revisando el status code de la respuesta directamente dentro de `SecurityHeaders` middleware, que ya corre en todas las requests.
+
+**Fase 7 — migraciones puntuales:** ver la entrada siguiente para el detalle de soft deletes + índices en `report_status`.

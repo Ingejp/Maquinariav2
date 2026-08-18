@@ -17,6 +17,9 @@ const routes = [
         component: RegisterForm,
         props: true,
     },
+    // Cualquier sub-ruta que no matchee (link viejo, typo) vuelve al paso 1
+    // en vez de dejar la isla en blanco.
+    { path: '/:pathMatch(.*)*', redirect: { name: 'report.yard' } },
 ];
 
 export default createRouter({

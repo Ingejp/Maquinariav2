@@ -37,6 +37,25 @@ npm run build   # o: npm run dev
 php artisan serve
 ```
 
+## Checklist de despliegue a pre-producción/producción
+
+Esta va a ser la **primera vez** que la app corre contra la RDS real — `php artisan migrate` va a ejecutar *todas* las migraciones del proyecto de una sola vez (crea `sessions`/`cache`/`jobs`/tablas de Spatie/soft-deletes+índices en `report_status`; `users`/`failed_jobs` se saltan solos porque ya existen, ver `docs/decisiones-proyecto.md`).
+
+1. **`.env` de producción** (no reusar el de local):
+   - `APP_ENV=production`, `APP_DEBUG=false` (con `debug=true` en prod se filtran stack traces al usuario).
+   - `APP_URL=https://tu-dominio-real`.
+   - `DB_*` apuntando a la RDS real + `MYSQL_ATTR_SSL_CA` con el certificado (conexión TLS).
+   - `SESSION_SECURE_COOKIE=true` (descomentar — con HTTPS real ya no rompe nada, y sin esto la sesión viaja insegura).
+   - `TRUSTED_PROXIES`: si hay un reverse proxy/load balancer terminando el SSL del dominio delante de la app, poner sus IPs (o `*` si es la única forma de llegar a la app) — si no, Laravel puede no detectar que la conexión real es HTTPS.
+   - `ADMIN_USERNAME`/`ADMIN_PASSWORD`: no hace falta, el usuario `admin` ya existe en la RDS real.
+2. **Migrar:** `php artisan migrate` — revisar el output, debería mostrar las migraciones nuevas corriendo limpio (sin colisión con el esquema legacy).
+3. **Seed de roles y permisos:** `php artisan db:seed --class=RoleSeeder` y `php artisan db:seed --class=PermissionSeeder`.
+4. **Crítico — sincronizar roles legacy:** `php artisan legacy:sync-roles`. Sin este paso, los usuarios reales (`admin`, `JP`, `jose1`, etc.) no tienen ningún rol de Spatie asignado y quedan bloqueados de todo el sistema excepto lo que Super Admin haga por bypass. Verificar después con Tinker que cada usuario real tiene el rol esperado (ver `docs/decisiones-proyecto.md` para la asignación por defecto de permisos por rol).
+5. **Build de assets:** `npm run build`.
+6. **`TestUserSeeder` no se ejecuta** en producción aunque corras `db:seed` completo (guardado a `local`/`testing` — ver `docs/decisiones-proyecto.md`), así que no hace falta excluirlo a mano.
+7. **QA manual con un usuario real de cada rol** (no solo Super Admin, que hace bypass de todos los permisos): confirmar que un `SUPERVISOR` puede reportar/ver dashboard pero no gestionar catálogos ni seguridad, y que un `ADMINISTRADOR` sí puede.
+8. El certificado SSL del dominio en sí (Let's Encrypt, etc.) se gestiona a nivel de servidor web/proxy — fuera del alcance de la app.
+
 ## Estructura del proyecto
 
 ```

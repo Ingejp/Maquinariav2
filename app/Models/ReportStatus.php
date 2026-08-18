@@ -7,10 +7,13 @@ use App\Models\Catalogs\Status;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['observation', 'machinery_id', 'status_id', 'user_id'])]
 class ReportStatus extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'report_status';
 
     public function machinery(): BelongsTo

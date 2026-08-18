@@ -17,7 +17,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:10,1');
 });
 
-Route::middleware('auth')->group(function () {
+// Rate limit general sobre todas las rutas de negocio autenticadas
+// (hallazgo 6.10: no había ninguna protección de este tipo antes).
+Route::middleware(['auth', 'throttle:120,1'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::redirect('/', '/configuracion/campos')->name('home');

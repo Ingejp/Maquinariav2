@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
 
@@ -65,6 +66,13 @@ class RoleController extends Controller
         ]);
 
         $role->syncPermissions($validated['permissions'] ?? []);
+
+        // Hallazgo A09 OWASP: registrar cambios de permisos por rol.
+        Log::info('Permisos de rol actualizados', [
+            'actor_id' => auth()->id(),
+            'role' => $role->name,
+            'permissions' => $validated['permissions'] ?? [],
+        ]);
 
         return new RoleResource($role->load('permissions'));
     }
