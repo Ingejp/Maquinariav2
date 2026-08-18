@@ -70,4 +70,14 @@ Patrón de integración: cada vista Blade "cascarón" declara `<div id="app" dat
 - Sin CI/CD, sin Docker/IaC — despliegue manual tradicional.
 - Sin migración de datos: la app apunta directamente a la RDS existente.
 
-Ver el análisis técnico completo del sistema original y el plan de reconstrucción por fases en [`docs/analisis-tecnico-TFPB-Maquinaria.md`](docs/analisis-tecnico-TFPB-Maquinaria.md).
+Ver el análisis técnico completo del sistema original y el plan de reconstrucción por fases en [`docs/analisis-tecnico-TFPB-Maquinaria.md`](docs/analisis-tecnico-TFPB-Maquinaria.md), y las decisiones tomadas durante la reconstrucción (que amplían o cierran puntos abiertos de ese análisis) en [`docs/decisiones-proyecto.md`](docs/decisiones-proyecto.md).
+
+## Estrategia responsive
+
+No es uniforme entre módulos — depende de cómo se usa cada uno en campo:
+
+- **Reportar** y el **resumen del Dashboard** (KPIs básicos): mobile-first — los operarios reportan desde el celular en la yarda.
+- **Gráficas y reportes detallados del Dashboard**: desktop-only — no se comprimen a mobile, se muestra un aviso de pantalla mínima requerida.
+- **Configuración** y **Seguridad**: desktop-first, responsive (uso administrativo, no de campo).
+
+Detalle completo en [`docs/decisiones-proyecto.md`](docs/decisiones-proyecto.md).
