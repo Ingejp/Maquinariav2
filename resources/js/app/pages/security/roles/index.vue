@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import http from '../../../utils/http';
 import ConfirmDialog from '../../../components/common/ConfirmDialog.vue';
+import { permissionLabel } from '../../../utils/permissionLabels';
 
 const roles = ref([]);
 const loading = ref(true);
@@ -103,6 +104,10 @@ onMounted(async () => {
         <div class="mb-6">
             <p class="text-xs font-semibold uppercase tracking-wide text-text-muted">Seguridad</p>
             <h1 class="font-display text-2xl font-semibold text-text">Roles</h1>
+            <p class="mt-1 text-sm text-text-muted">
+                Selecciona un rol de la lista y marca qué puede hacer en el sistema. Para cambiar el rol de una
+                persona, ve a la pestaña Usuarios.
+            </p>
         </div>
 
         <div
@@ -161,17 +166,27 @@ onMounted(async () => {
                             Eliminar rol
                         </button>
                     </div>
-                    <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Permisos</p>
+                    <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">Qué puede hacer este rol</p>
+                    <p class="mb-3 text-xs text-text-muted">Marca las funciones que este rol debe tener. Los cambios se guardan al instante.</p>
                     <div class="space-y-2">
-                        <label v-for="perm in allPermissions" :key="perm.id" class="flex items-center gap-3 rounded-md border border-border px-3 py-2.5">
+                        <label
+                            v-for="perm in allPermissions"
+                            :key="perm.id"
+                            class="flex items-start gap-3 rounded-md border border-border px-3 py-2.5"
+                        >
                             <input
                                 type="checkbox"
-                                class="h-4 w-4 accent-accent"
+                                class="mt-0.5 h-4 w-4 accent-accent"
                                 :checked="selected.permissions.includes(perm.name)"
                                 :disabled="savingPermissions"
                                 @change="togglePermission(perm.name)"
                             >
-                            <span class="text-sm text-text">{{ perm.name }}</span>
+                            <span>
+                                <span class="block text-sm font-medium text-text">{{ permissionLabel(perm.name).label }}</span>
+                                <span v-if="permissionLabel(perm.name).description" class="block text-xs text-text-muted">
+                                    {{ permissionLabel(perm.name).description }}
+                                </span>
+                            </span>
                         </label>
                     </div>
                 </div>

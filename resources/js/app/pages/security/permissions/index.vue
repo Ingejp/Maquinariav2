@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import http from '../../../utils/http';
 import ConfirmDialog from '../../../components/common/ConfirmDialog.vue';
+import { permissionLabel } from '../../../utils/permissionLabels';
 
 const permissions = ref([]);
 const loading = ref(true);
@@ -89,8 +90,10 @@ onMounted(load);
             <p class="text-xs font-semibold uppercase tracking-wide text-text-muted">Seguridad</p>
             <h1 class="font-display text-2xl font-semibold text-text">Permisos</h1>
             <p class="mt-1 text-sm text-text-muted">
-                catalogs.view, catalogs.manage, report.create, dashboard.view y security.manage están conectados a
-                rutas reales — cambiarles el nombre o eliminarlos puede bloquear esas pantallas.
+                Catálogo técnico de las funciones que existen en el sistema.
+                <strong class="font-medium text-text">Para decidir qué puede hacer cada rol, ve a la pestaña Roles</strong>
+                — acá solo se administra la lista en sí. Los 5 permisos base están conectados a rutas reales:
+                cambiarles el nombre o eliminarlos puede bloquear esas pantallas.
             </p>
         </div>
 
@@ -127,16 +130,17 @@ onMounted(load);
                 <thead>
                     <tr class="border-b border-border bg-surface-2 text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                         <th class="px-4 py-3">Nombre</th>
+                        <th class="px-4 py-3">Descripción</th>
                         <th class="px-4 py-3">Roles</th>
                         <th class="px-4 py-3 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-if="loading">
-                        <td colspan="3" class="px-4 py-10 text-center text-text-muted">Cargando…</td>
+                        <td colspan="4" class="px-4 py-10 text-center text-text-muted">Cargando…</td>
                     </tr>
                     <tr v-else-if="!permissions.length">
-                        <td colspan="3" class="px-4 py-10 text-center text-text-muted">Sin permisos.</td>
+                        <td colspan="4" class="px-4 py-10 text-center text-text-muted">Sin permisos.</td>
                     </tr>
                     <tr v-for="perm in permissions" v-else :key="perm.id" class="border-b border-border last:border-0">
                         <td class="px-4 py-3 font-medium text-text">
@@ -148,7 +152,9 @@ onMounted(load);
                                 class="w-full rounded-md border border-border px-2 py-1 text-sm"
                                 @keyup.enter="saveEdit"
                             >
+                            <span v-if="editing?.id !== perm.id" class="block text-xs text-text-muted">{{ permissionLabel(perm.name).label }}</span>
                         </td>
+                        <td class="px-4 py-3 text-text-muted">{{ permissionLabel(perm.name).description || '—' }}</td>
                         <td class="px-4 py-3 text-text-muted">{{ perm.roles_count }}</td>
                         <td class="px-4 py-3">
                             <div class="flex justify-end gap-3">
