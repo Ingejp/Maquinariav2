@@ -69,6 +69,7 @@ class DashboardController extends Controller
             ->when($request->integer('machinery_type_id'), function ($q, $typeId) {
                 $q->whereHas('machinery', fn ($mq) => $mq->where('machinery_type_id', $typeId));
             })
+            ->when($request->integer('status_id'), fn ($q, $statusId) => $q->where('status_id', $statusId))
             ->when($request->date('from'), fn ($q, $from) => $q->whereDate('created_at', '>=', $from))
             ->when($request->date('to'), fn ($q, $to) => $q->whereDate('created_at', '<=', $to))
             ->orderByDesc('created_at');
@@ -106,6 +107,7 @@ class DashboardController extends Controller
             ->join('status', 'status.id', '=', 'report_status.status_id')
             ->when($request->integer('field_id'), fn ($q, $fieldId) => $q->where('machinery.field_id', $fieldId))
             ->when($request->integer('machinery_type_id'), fn ($q, $typeId) => $q->where('machinery.machinery_type_id', $typeId))
+            ->when($request->integer('status_id'), fn ($q, $statusId) => $q->where('report_status.status_id', $statusId))
             ->whereBetween('report_status.created_at', [$from, $to])
             ->selectRaw('DATE(report_status.created_at) as day, status.description as status_name, COUNT(*) as total')
             ->groupBy('day', 'status_name')

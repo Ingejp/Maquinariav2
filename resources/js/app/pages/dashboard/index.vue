@@ -9,7 +9,8 @@ const loadingSummary = ref(true);
 
 const fields = ref([]);
 const machineryTypes = ref([]);
-const filters = ref({ field_id: '', machinery_type_id: '', from: '', to: '' });
+const statuses = ref([]);
+const filters = ref({ field_id: '', machinery_type_id: '', status_id: '', from: '', to: '' });
 
 const chartData = ref(null);
 const loadingChart = ref(true);
@@ -22,6 +23,7 @@ function cleanFilters() {
     const out = {};
     if (filters.value.field_id) out.field_id = filters.value.field_id;
     if (filters.value.machinery_type_id) out.machinery_type_id = filters.value.machinery_type_id;
+    if (filters.value.status_id) out.status_id = filters.value.status_id;
     if (filters.value.from) out.from = filters.value.from;
     if (filters.value.to) out.to = filters.value.to;
     return out;
@@ -35,12 +37,14 @@ async function loadSummary() {
 }
 
 async function loadOptions() {
-    const [fieldsRes, typesRes] = await Promise.all([
+    const [fieldsRes, typesRes, statusesRes] = await Promise.all([
         http.get('/configuracion/campos'),
         http.get('/configuracion/tipos-maquinaria'),
+        http.get('/configuracion/estados'),
     ]);
     fields.value = fieldsRes.data.data;
     machineryTypes.value = typesRes.data.data;
+    statuses.value = statusesRes.data.data;
 }
 
 async function loadChart() {
@@ -123,6 +127,13 @@ onMounted(async () => {
                     <select v-model="filters.machinery_type_id" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
                         <option value="">Todos</option>
                         <option v-for="t in machineryTypes" :key="t.id" :value="t.id">{{ t.description }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-text-muted">Estado</label>
+                    <select v-model="filters.status_id" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
+                        <option value="">Todos</option>
+                        <option v-for="s in statuses" :key="s.id" :value="s.id">{{ s.description }}</option>
                     </select>
                 </div>
                 <div>
