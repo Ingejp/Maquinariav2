@@ -105,11 +105,16 @@ class ReportController extends Controller
     }
 
     /**
-     * Estados disponibles con su clase semántica para el selector visual.
+     * Estados disponibles con su clase semántica para el selector visual,
+     * ordenados: OPERATIVA → CON LIMITACIONES → NO OPERATIVA (good/warn/critical).
      */
     public function statuses(): JsonResponse
     {
-        $statuses = Status::query()->active()->orderBy('description')->get();
+        $order = ['good' => 0, 'warn' => 1, 'critical' => 2];
+
+        $statuses = Status::query()->active()->get()
+            ->sortBy(fn (Status $s) => $order[$s->semanticClass()] ?? 3)
+            ->values();
 
         return response()->json($statuses->map(fn (Status $status) => [
             'id'          => $status->id,
