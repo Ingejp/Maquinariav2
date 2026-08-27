@@ -40,6 +40,31 @@ class ReportController extends Controller
     }
 
     /**
+     * Todas las máquinas activas de una yarda, sin filtro de tipo.
+     * Usada por el nuevo flujo de pantalla única.
+     */
+    public function machinesByField(Field $field): JsonResponse
+    {
+        $machines = Machinery::query()
+            ->active()
+            ->where('field_id', $field->id)
+            ->with('latestReport.status', 'machineryType')
+            ->orderBy('description')
+            ->get();
+
+        return response()->json($machines->map(fn (Machinery $machine) => [
+            'id' => $machine->id,
+            'description' => $machine->description,
+            'machinery_type' => $machine->machineryType->description,
+            'last_report' => $machine->latestReport ? [
+                'status' => $machine->latestReport->status->description,
+                'status_class' => $machine->latestReport->status->semanticClass(),
+                'reported_at' => $machine->latestReport->created_at,
+            ] : null,
+        ]));
+    }
+
+    /**
      * Tipos de maquinaria con al menos una máquina activa en esa yarda.
      */
     public function machineryTypes(Field $field): JsonResponse
@@ -72,20 +97,25 @@ class ReportController extends Controller
             'id' => $machine->id,
             'description' => $machine->description,
             'last_report' => $machine->latestReport ? [
-                'status' => $machine->latestReport->status->description,
-                'reported_at' => $machine->latestReport->created_at,
+                'status'       => $machine->latestReport->status->description,
+                'status_class' => $machine->latestReport->status->semanticClass(),
+                'reported_at'  => $machine->latestReport->created_at,
             ] : null,
         ]));
     }
 
     /**
-     * Estados disponibles para el paso final de registro.
+     * Estados disponibles con su clase semántica para el selector visual.
      */
     public function statuses(): JsonResponse
     {
         $statuses = Status::query()->active()->orderBy('description')->get();
 
-        return response()->json(CatalogResource::collection($statuses)->resolve());
+        return response()->json($statuses->map(fn (Status $status) => [
+            'id'          => $status->id,
+            'description' => $status->description,
+            'class'       => $status->semanticClass(),
+        ]));
     }
 
     public function store(ReportStatusRequest $request): JsonResponse

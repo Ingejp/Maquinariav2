@@ -65,6 +65,7 @@ Route::middleware(['auth', 'throttle:120,1'])->group(function () {
     // abajo para que no lo intercepte.
     Route::prefix('reportar/datos')->name('report.data.')->middleware('permission:report.create')->group(function () {
         Route::get('/yardas', [ReportController::class, 'index'])->name('fields');
+        Route::get('/yardas/{field}/maquinas', [ReportController::class, 'machinesByField'])->name('machines-by-field');
         Route::get('/yardas/{field}/tipos', [ReportController::class, 'machineryTypes'])->name('machinery-types');
         Route::get('/yardas/{field}/tipos/{machineryType}/maquinas', [ReportController::class, 'machines'])->name('machines');
         Route::get('/estados', [ReportController::class, 'statuses'])->name('statuses');
