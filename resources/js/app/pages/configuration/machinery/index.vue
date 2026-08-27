@@ -137,34 +137,9 @@ onMounted(async () => {
             {{ banner.message }}
         </div>
 
-        <div class="mb-4 flex flex-wrap gap-2">
-            <select v-model="filters.field_id" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text">
-                <option value="">Todas las yardas</option>
-                <option v-for="f in fields" :key="f.id" :value="f.id">{{ f.description }}</option>
-            </select>
-            <select v-model="filters.machinery_type_id" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text">
-                <option value="">Todos los tipos</option>
-                <option v-for="t in machineryTypes" :key="t.id" :value="t.id">{{ t.description }}</option>
-            </select>
-        </div>
-
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-            <CatalogTable :items="items" :loading="loading" empty-message="No hay máquinas registradas." @edit="startEdit" @toggle="toggleStatus" @delete="askDelete">
-                <template #head>
-                    <th class="px-4 py-3">Nombre</th>
-                    <th class="px-4 py-3">Tipo</th>
-                    <th class="px-4 py-3">Yarda</th>
-                    <th class="px-4 py-3">Estado</th>
-                </template>
-                <template #row="{ item }">
-                    <td class="px-4 py-3 font-medium text-text">{{ item.description }}</td>
-                    <td class="px-4 py-3 text-text-muted">{{ item.machinery_type.description }}</td>
-                    <td class="px-4 py-3 text-text-muted">{{ item.field.description }}</td>
-                    <td class="px-4 py-3"><StatusBadge :active="item.active" /></td>
-                </template>
-            </CatalogTable>
-
-            <div class="rounded-xl border border-border bg-surface p-5">
+            <!-- Formulario: primero en mobile, columna derecha en desktop -->
+            <div class="order-first rounded-xl border border-border bg-surface p-5 lg:order-last">
                 <h3 class="font-display text-base font-semibold text-text">{{ editing ? 'Editar máquina' : 'Nueva máquina' }}</h3>
                 <form class="mt-4 space-y-4" @submit.prevent="submit">
                     <div>
@@ -220,6 +195,35 @@ onMounted(async () => {
                         </button>
                     </div>
                 </form>
+            </div>
+
+            <!-- Filtros + Tabla: segundo en mobile, columna izquierda en desktop -->
+            <div class="order-last lg:order-first">
+                <div class="mb-4 flex flex-wrap gap-2">
+                    <select v-model="filters.field_id" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text">
+                        <option value="">Todas las yardas</option>
+                        <option v-for="f in fields" :key="f.id" :value="f.id">{{ f.description }}</option>
+                    </select>
+                    <select v-model="filters.machinery_type_id" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text">
+                        <option value="">Todos los tipos</option>
+                        <option v-for="t in machineryTypes" :key="t.id" :value="t.id">{{ t.description }}</option>
+                    </select>
+                </div>
+
+                <CatalogTable :items="items" :loading="loading" empty-message="No hay máquinas registradas." @edit="startEdit" @toggle="toggleStatus" @delete="askDelete">
+                    <template #head>
+                        <th class="px-4 py-3">Nombre</th>
+                        <th class="px-4 py-3">Tipo</th>
+                        <th class="px-4 py-3">Yarda</th>
+                        <th class="px-4 py-3">Estado</th>
+                    </template>
+                    <template #row="{ item }">
+                        <td class="px-4 py-3 font-medium text-text">{{ item.description }}</td>
+                        <td class="px-4 py-3 text-text-muted">{{ item.machinery_type.description }}</td>
+                        <td class="px-4 py-3 text-text-muted">{{ item.field.description }}</td>
+                        <td class="px-4 py-3"><StatusBadge :active="item.active" /></td>
+                    </template>
+                </CatalogTable>
             </div>
         </div>
 
