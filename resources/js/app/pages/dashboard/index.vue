@@ -86,6 +86,11 @@ const statusDotClasses = {
 };
 
 onMounted(async () => {
+    // Pre-aplicar filtro de tipo desde URL (?machinery_type_id=X)
+    const params = new URLSearchParams(window.location.search);
+    const typeId = params.get('machinery_type_id');
+    if (typeId) filters.value.machinery_type_id = Number(typeId);
+
     loadSummary();
     await loadOptions();
     loadChart();
@@ -96,6 +101,12 @@ onMounted(async () => {
 <template>
     <main class="px-4 py-6 sm:px-6">
         <div class="mb-6">
+            <a href="/dashboard" class="mb-2 inline-flex items-center gap-1 text-xs font-semibold text-text-muted hover:text-accent">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Cambiar tipo
+            </a>
             <p class="text-xs font-semibold uppercase tracking-wide text-text-muted">Dashboard</p>
             <h1 class="font-display text-2xl font-semibold text-text">Estado de la flota</h1>
         </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Catalogs\Machinery;
+use App\Models\Catalogs\MachineryType;
 use App\Models\Catalogs\Status;
 use App\Models\ReportStatus;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,17 @@ class DashboardController extends Controller
     {
         if ($request->wantsJson()) {
             return $this->summary();
+        }
+
+        // Sin tipo seleccionado → pantalla de selector
+        if (! $request->has('machinery_type_id')) {
+            $types = MachineryType::query()
+                ->active()
+                ->withCount(['machinery' => fn ($q) => $q->active()])
+                ->orderBy('description')
+                ->get();
+
+            return view('dashboard.selector', compact('types'));
         }
 
         return view('dashboard.index');
