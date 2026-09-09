@@ -105,7 +105,7 @@ onMounted(async () => {
             />
         </div>
 
-        <div class="mt-10 hidden lg:block">
+        <div class="mt-10">
             <!-- Toggle Gráfico / Reporte -->
             <div class="mb-5 flex items-center gap-2">
                 <button
@@ -163,8 +163,5 @@ onMounted(async () => {
             </div>
         </div>
 
-        <div class="mt-10 rounded-xl border border-border bg-surface-2 p-6 text-center lg:hidden">
-            <p class="text-sm text-text-muted">Las gráficas y el detalle de reportes están disponibles en pantallas más grandes.</p>
-        </div>
     </main>
 </template>
