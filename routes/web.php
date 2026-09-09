@@ -82,9 +82,10 @@ Route::middleware(['auth', 'throttle:120,1'])->group(function () {
         ->name('report.index');
 
     Route::prefix('dashboard/datos')->name('dashboard.data.')->middleware('permission:dashboard.view')->group(function () {
-        Route::get('/resumen', [DashboardController::class, 'summary'])->name('summary');
+        Route::get('/resumen',  [DashboardController::class, 'summary'])->name('summary');
         Route::get('/reportes', [DashboardController::class, 'reports'])->name('reports');
-        Route::get('/grafica', [DashboardController::class, 'chart'])->name('chart');
+        Route::get('/sesiones', [DashboardController::class, 'sessions'])->name('sessions');
+        Route::get('/grafica',  [DashboardController::class, 'chart'])->name('chart');
     });
 
     Route::get('/dashboard', [DashboardController::class, 'index'])

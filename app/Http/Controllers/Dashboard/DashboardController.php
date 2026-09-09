@@ -116,6 +116,77 @@ class DashboardController extends Controller
     }
 
     /**
+     * Registros agrupados por sesión (yarda + ventana de 30 min).
+     * Una sesión = todas las máquinas reportadas en el mismo bloque horario.
+     */
+    public function sessions(Request $request): JsonResponse
+    {
+        $from = $request->date('from') ?? now()->subDays(6)->startOfDay();
+        $to   = $request->date('to')   ?? now()->endOfDay();
+
+        $rows = DB::table('report_status')
+            ->join('machinery', 'machinery.id', '=', 'report_status.machinery_id')
+            ->join('status',    'status.id',    '=', 'report_status.status_id')
+            ->join('field',     'field.id',     '=', 'machinery.field_id')
+            ->when($request->integer('field_id'),          fn ($q, $id) => $q->where('machinery.field_id', $id))
+            ->when($request->integer('machinery_type_id'), fn ($q, $id) => $q->where('machinery.machinery_type_id', $id))
+            ->whereBetween('report_status.created_at', [$from, $to])
+            ->selectRaw("
+                machinery.field_id,
+                field.description         AS field_name,
+                FLOOR(UNIX_TIMESTAMP(report_status.created_at) / 1800) AS bucket,
+                report_status.created_at,
+                machinery.description     AS machinery_name,
+                status.description        AS status_name,
+                CASE
+                    WHEN status.description LIKE '%NO OPERATIVA%' THEN 2
+                    WHEN status.description LIKE '%LIMITAC%'      THEN 1
+                    WHEN status.description LIKE '%OPERATIVA%'    THEN 0
+                    ELSE 3
+                END AS status_order,
+                report_status.observation
+            ")
+            ->orderByRaw('bucket DESC, status_order ASC')
+            ->orderBy('machinery.description')
+            ->get();
+
+        $sessions = [];
+        foreach ($rows as $row) {
+            $key = $row->field_id . '_' . $row->bucket;
+
+            if (! isset($sessions[$key])) {
+                $sessions[$key] = [
+                    'field'        => $row->field_name,
+                    'session_time' => $row->created_at,
+                    'summary'      => ['good' => 0, 'warn' => 0, 'critical' => 0],
+                    'machines'     => [],
+                ];
+            } elseif ($row->created_at < $sessions[$key]['session_time']) {
+                $sessions[$key]['session_time'] = $row->created_at;
+            }
+
+            $class = match ((int) $row->status_order) {
+                2       => 'critical',
+                1       => 'warn',
+                0       => 'good',
+                default => 'neutral',
+            };
+
+            $summaryKey = in_array($class, ['good', 'warn', 'critical']) ? $class : 'good';
+            $sessions[$key]['summary'][$summaryKey]++;
+
+            $sessions[$key]['machines'][] = [
+                'machinery'    => $row->machinery_name,
+                'status'       => $row->status_name,
+                'status_class' => $class,
+                'observation'  => $row->observation,
+            ];
+        }
+
+        return response()->json(array_values($sessions));
+    }
+
+    /**
      * Reportes por día en el rango, agrupados por estado — para la gráfica.
      */
     public function chart(Request $request): JsonResponse

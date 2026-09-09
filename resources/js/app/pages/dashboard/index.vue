@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import http from '../../utils/http';
 import KpiCard from './components/KpiCard.vue';
 import ReportsChart from './components/ReportsChart.vue';
+import ReportSessions from './components/ReportSessions.vue';
 
 const summary = ref(null);
 const loadingSummary = ref(true);
@@ -10,16 +11,14 @@ const loadingSummary = ref(true);
 const activeView = ref('chart'); // 'chart' | 'table'
 
 const fields = ref([]);
-const machineryTypes = ref([]);
 const statuses = ref([]);
 const filters = ref({ field_id: '', machinery_type_id: '', status_id: '', from: '', to: '' });
 
 const chartData = ref(null);
 const loadingChart = ref(true);
 
-const reports = ref([]);
-const reportsMeta = ref({ current_page: 1, last_page: 1, total: 0 });
-const loadingReports = ref(true);
+const sessions = ref([]);
+const loadingSessions = ref(true);
 
 function cleanFilters() {
     const out = {};
@@ -39,13 +38,11 @@ async function loadSummary() {
 }
 
 async function loadOptions() {
-    const [fieldsRes, typesRes, statusesRes] = await Promise.all([
+    const [fieldsRes, statusesRes] = await Promise.all([
         http.get('/configuracion/campos'),
-        http.get('/configuracion/tipos-maquinaria'),
         http.get('/configuracion/estados'),
     ]);
     fields.value = fieldsRes.data.data;
-    machineryTypes.value = typesRes.data.data;
     statuses.value = statusesRes.data.data;
 }
 
@@ -56,36 +53,18 @@ async function loadChart() {
     loadingChart.value = false;
 }
 
-async function loadReports(page = 1) {
-    loadingReports.value = true;
-    const { data } = await http.get('/dashboard/datos/reportes', { params: { ...cleanFilters(), page } });
-    reports.value = data.data;
-    reportsMeta.value = { current_page: data.current_page, last_page: data.last_page, total: data.total };
-    loadingReports.value = false;
+async function loadSessions() {
+    loadingSessions.value = true;
+    const { data } = await http.get('/dashboard/datos/sesiones', { params: cleanFilters() });
+    sessions.value = data;
+    loadingSessions.value = false;
 }
 
 function applyFilters() {
     loadChart();
-    loadReports(1);
+    loadSessions();
 }
 
-function formatDate(value) {
-    if (!value) return '';
-    return new Date(value).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' });
-}
-
-const statusBadgeClasses = {
-    good: 'bg-good-soft text-good',
-    warn: 'bg-warn-soft text-warn',
-    critical: 'bg-critical-soft text-critical',
-    neutral: 'bg-surface-2 text-text-muted',
-};
-const statusDotClasses = {
-    good: 'bg-good',
-    warn: 'bg-warn',
-    critical: 'bg-critical',
-    neutral: 'bg-text-muted',
-};
 
 onMounted(async () => {
     // Pre-aplicar filtro de tipo desde URL (?machinery_type_id=X)
@@ -96,7 +75,7 @@ onMounted(async () => {
     loadSummary();
     await loadOptions();
     loadChart();
-    loadReports();
+    loadSessions();
 });
 </script>
 
@@ -155,7 +134,7 @@ onMounted(async () => {
                         <option v-for="f in fields" :key="f.id" :value="f.id">{{ f.description }}</option>
                     </select>
                 </div>
-<div>
+                <div>
                     <label class="mb-1 block text-xs font-semibold text-text-muted">Estado</label>
                     <select v-model="filters.status_id" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
                         <option value="">Todos</option>
@@ -179,68 +158,8 @@ onMounted(async () => {
                 <p v-else class="py-10 text-center text-sm text-text-muted">Sin datos en este rango.</p>
             </div>
 
-            <div v-if="activeView === 'table'" class="rounded-xl border border-border bg-surface">
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[760px] text-sm">
-                        <thead>
-                            <tr class="border-b border-border bg-surface-2 text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                                <th class="px-4 py-3">Fecha</th>
-                                <th class="px-4 py-3">Máquina</th>
-                                <th class="px-4 py-3">Tipo</th>
-                                <th class="px-4 py-3">Yarda</th>
-                                <th class="px-4 py-3">Estado</th>
-                                <th class="px-4 py-3">Observación</th>
-                                <th class="px-4 py-3">Usuario</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-if="loadingReports">
-                                <td colspan="7" class="px-4 py-10 text-center text-text-muted">Cargando…</td>
-                            </tr>
-                            <tr v-else-if="!reports.length">
-                                <td colspan="7" class="px-4 py-10 text-center text-text-muted">Sin reportes en este rango.</td>
-                            </tr>
-                            <tr v-for="r in reports" v-else :key="r.id" class="border-b border-border last:border-0">
-                                <td class="px-4 py-3 text-text-muted">{{ formatDate(r.created_at) }}</td>
-                                <td class="px-4 py-3 font-medium text-text">{{ r.machinery }}</td>
-                                <td class="px-4 py-3 text-text-muted">{{ r.machinery_type }}</td>
-                                <td class="px-4 py-3 text-text-muted">{{ r.field }}</td>
-                                <td class="px-4 py-3">
-                                    <span
-                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-                                        :class="statusBadgeClasses[r.status_class] || statusBadgeClasses.neutral"
-                                    >
-                                        <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClasses[r.status_class] || statusDotClasses.neutral"></span>
-                                        {{ r.status }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 text-text-muted">{{ r.observation || '—' }}</td>
-                                <td class="px-4 py-3 text-text-muted">{{ r.user }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div v-if="reportsMeta.last_page > 1" class="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-text-muted">
-                    <span>Página {{ reportsMeta.current_page }} de {{ reportsMeta.last_page }} · {{ reportsMeta.total }} reportes</span>
-                    <div class="flex gap-2">
-                        <button
-                            type="button"
-                            :disabled="reportsMeta.current_page <= 1"
-                            class="rounded-md border border-border px-3 py-1.5 disabled:opacity-40"
-                            @click="loadReports(reportsMeta.current_page - 1)"
-                        >
-                            Anterior
-                        </button>
-                        <button
-                            type="button"
-                            :disabled="reportsMeta.current_page >= reportsMeta.last_page"
-                            class="rounded-md border border-border px-3 py-1.5 disabled:opacity-40"
-                            @click="loadReports(reportsMeta.current_page + 1)"
-                        >
-                            Siguiente
-                        </button>
-                    </div>
-                </div>
+            <div v-if="activeView === 'table'">
+                <ReportSessions :sessions="sessions" :loading="loadingSessions" />
             </div>
         </div>
 
