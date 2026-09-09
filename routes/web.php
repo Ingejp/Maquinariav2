@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Catalogs\FieldController;
 use App\Http\Controllers\Catalogs\MachineryController;
 use App\Http\Controllers\Catalogs\MachineryTypeController;
@@ -22,7 +23,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'throttle:120,1'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    Route::redirect('/', '/configuracion/campos')->name('home');
+    Route::get('/', [HomeController::class, 'index'])->name('home');
 
     // Ver el catálogo requiere catalogs.view; crear/editar/activar/eliminar
     // requiere además catalogs.manage (aplicado por ruta, no al grupo).
