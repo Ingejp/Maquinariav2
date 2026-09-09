@@ -7,6 +7,8 @@ import ReportsChart from './components/ReportsChart.vue';
 const summary = ref(null);
 const loadingSummary = ref(true);
 
+const activeView = ref('chart'); // 'chart' | 'table'
+
 const fields = ref([]);
 const machineryTypes = ref([]);
 const statuses = ref([]);
@@ -125,6 +127,26 @@ onMounted(async () => {
         </div>
 
         <div class="mt-10 hidden lg:block">
+            <!-- Toggle Gráfico / Reporte -->
+            <div class="mb-5 flex items-center gap-2">
+                <button
+                    type="button"
+                    class="rounded-lg border px-4 py-2 text-sm font-semibold transition"
+                    :class="activeView === 'chart' ? 'bg-accent border-accent text-white' : 'border-border text-text-muted hover:border-accent hover:text-accent'"
+                    @click="activeView = 'chart'"
+                >
+                    Gráfico
+                </button>
+                <button
+                    type="button"
+                    class="rounded-lg border px-4 py-2 text-sm font-semibold transition"
+                    :class="activeView === 'table' ? 'bg-accent border-accent text-white' : 'border-border text-text-muted hover:border-accent hover:text-accent'"
+                    @click="activeView = 'table'"
+                >
+                    Reporte
+                </button>
+            </div>
+
             <div class="mb-4 flex flex-wrap items-end gap-3">
                 <div>
                     <label class="mb-1 block text-xs font-semibold text-text-muted">Yarda</label>
@@ -150,14 +172,14 @@ onMounted(async () => {
                 </div>
             </div>
 
-            <div class="mb-8 rounded-xl border border-border bg-surface p-5">
+            <div v-if="activeView === 'chart'" class="mb-8 rounded-xl border border-border bg-surface p-5">
                 <h2 class="mb-4 font-display text-base font-semibold text-text">Reportes por día</h2>
                 <div v-if="loadingChart" class="py-10 text-center text-sm text-text-muted">Cargando…</div>
                 <ReportsChart v-else-if="chartData && chartData.labels.length" :chart-data="chartData" />
                 <p v-else class="py-10 text-center text-sm text-text-muted">Sin datos en este rango.</p>
             </div>
 
-            <div class="rounded-xl border border-border bg-surface">
+            <div v-if="activeView === 'table'" class="rounded-xl border border-border bg-surface">
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-[760px] text-sm">
                         <thead>

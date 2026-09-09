@@ -29,15 +29,14 @@ function buildConfig() {
                 data: d.data,
                 backgroundColor: palette[d.class] || palette.neutral,
                 borderRadius: 4,
-                stack: 'reportes',
             })),
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { stacked: true, grid: { display: false } },
-                y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { precision: 0 } },
             },
             plugins: {
                 legend: { position: 'bottom' },
