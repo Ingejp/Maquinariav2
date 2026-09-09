@@ -74,6 +74,9 @@ class DashboardController extends Controller
     public function reports(Request $request): JsonResponse
     {
         $query = ReportStatus::query()
+            ->select('report_status.*')
+            ->join('status', 'status.id', '=', 'report_status.status_id')
+            ->join('machinery', 'machinery.id', '=', 'report_status.machinery_id')
             ->with(['machinery.field', 'machinery.machineryType', 'status', 'user'])
             ->when($request->integer('field_id'), function ($q, $fieldId) {
                 $q->whereHas('machinery', fn ($mq) => $mq->where('field_id', $fieldId));
@@ -81,10 +84,16 @@ class DashboardController extends Controller
             ->when($request->integer('machinery_type_id'), function ($q, $typeId) {
                 $q->whereHas('machinery', fn ($mq) => $mq->where('machinery_type_id', $typeId));
             })
-            ->when($request->integer('status_id'), fn ($q, $statusId) => $q->where('status_id', $statusId))
-            ->when($request->date('from'), fn ($q, $from) => $q->whereDate('created_at', '>=', $from))
-            ->when($request->date('to'), fn ($q, $to) => $q->whereDate('created_at', '<=', $to))
-            ->orderByDesc('created_at');
+            ->when($request->integer('status_id'), fn ($q, $statusId) => $q->where('report_status.status_id', $statusId))
+            ->when($request->date('from'), fn ($q, $from) => $q->whereDate('report_status.created_at', '>=', $from))
+            ->when($request->date('to'), fn ($q, $to) => $q->whereDate('report_status.created_at', '<=', $to))
+            ->orderByRaw("CASE
+                WHEN status.description LIKE '%NO OPERATIVA%' THEN 2
+                WHEN status.description LIKE '%LIMITAC%' THEN 1
+                WHEN status.description LIKE '%OPERATIVA%' THEN 0
+                ELSE 3
+            END")
+            ->orderBy('machinery.description');
 
         $reports = $query->paginate(25)->withQueryString();
 
