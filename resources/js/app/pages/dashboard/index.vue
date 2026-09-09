@@ -65,6 +65,11 @@ function applyFilters() {
     loadSessions();
 }
 
+function exportExcel() {
+    const params = new URLSearchParams(cleanFilters());
+    window.location.href = `/dashboard/datos/exportar?${params.toString()}`;
+}
+
 
 onMounted(async () => {
     // Pre-aplicar filtro de tipo desde URL (?machinery_type_id=X)
@@ -106,7 +111,7 @@ onMounted(async () => {
         </div>
 
         <div class="mt-10">
-            <!-- Toggle Gráfico / Reporte -->
+            <!-- Toggle Gráfico / Reporte + Exportar -->
             <div class="mb-5 flex items-center gap-2">
                 <button
                     type="button"
@@ -123,6 +128,18 @@ onMounted(async () => {
                     @click="activeView = 'table'"
                 >
                     Reporte
+                </button>
+
+                <button
+                    type="button"
+                    title="Exportar a Excel"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border border-[#1d6f42] bg-[#1d6f42] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#185c37]"
+                    @click="exportExcel"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17l-1.8-3 1.8-3H10l-1.5 3L10 17H8.5zm3 0-1.5-3 1.5-3H13l-1.5 3 1.5 3h-1.5zm3.5 0h-1.5l1.5-3-1.5-3H15l1.5 3-1.5 3z"/>
+                    </svg>
+                    Excel
                 </button>
             </div>
 

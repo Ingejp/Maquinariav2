@@ -86,6 +86,7 @@ Route::middleware(['auth', 'throttle:120,1'])->group(function () {
         Route::get('/reportes', [DashboardController::class, 'reports'])->name('reports');
         Route::get('/sesiones', [DashboardController::class, 'sessions'])->name('sessions');
         Route::get('/grafica',  [DashboardController::class, 'chart'])->name('chart');
+        Route::get('/exportar', [DashboardController::class, 'export'])->name('export');
     });
 
     Route::get('/dashboard', [DashboardController::class, 'index'])

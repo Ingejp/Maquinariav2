@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Toda la agregación acá es SQL (GROUP BY / WHERE) o se apoya en relaciones
@@ -225,5 +226,65 @@ class DashboardController extends Controller
             'labels' => $days,
             'datasets' => $datasets,
         ]);
+    }
+
+    /**
+     * Exporta los registros filtrados como CSV (Excel lo abre nativamente).
+     * Columnas: # Horario Máquina Predio Limitante Semana Estatus Día Hora
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $from = $request->date('from') ?? now()->subDays(6)->startOfDay();
+        $to   = $request->date('to')   ?? now()->endOfDay();
+
+        $rows = DB::table('report_status')
+            ->join('machinery', 'machinery.id', '=', 'report_status.machinery_id')
+            ->join('status',    'status.id',    '=', 'report_status.status_id')
+            ->join('field',     'field.id',     '=', 'machinery.field_id')
+            ->when($request->integer('field_id'),          fn ($q, $id) => $q->where('machinery.field_id', $id))
+            ->when($request->integer('machinery_type_id'), fn ($q, $id) => $q->where('machinery.machinery_type_id', $id))
+            ->when($request->integer('status_id'),         fn ($q, $id) => $q->where('report_status.status_id', $id))
+            ->whereBetween('report_status.created_at', [$from, $to])
+            ->selectRaw("
+                report_status.created_at,
+                machinery.description AS machinery_name,
+                field.description     AS field_name,
+                report_status.observation,
+                status.description    AS status_name,
+                CASE
+                    WHEN status.description LIKE '%NO OPERATIVA%' THEN 2
+                    WHEN status.description LIKE '%LIMITAC%'      THEN 1
+                    WHEN status.description LIKE '%OPERATIVA%'    THEN 0
+                    ELSE 3
+                END AS status_order
+            ")
+            ->orderByRaw('report_status.created_at DESC, status_order ASC')
+            ->orderBy('machinery.description')
+            ->get();
+
+        $filename = 'reporte-flota-' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // BOM para que Excel abra UTF-8 correctamente
+            fputcsv($out, ['#', 'Horario', 'Máquina', 'Predio', 'Limitante', 'Semana', 'Estatus', 'Día', 'Hora']);
+
+            $i = 1;
+            foreach ($rows as $row) {
+                $dt = new \DateTime($row->created_at);
+                fputcsv($out, [
+                    $i++,
+                    $dt->format('j/n/Y, H:i:s'),
+                    $row->machinery_name,
+                    $row->field_name,
+                    $row->observation ?? '',
+                    $dt->format('W'),  // semana ISO
+                    $row->status_name,
+                    $dt->format('N'),  // día de semana (1=lun … 7=dom)
+                    $dt->format('G'),  // hora sin cero inicial
+                ]);
+            }
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 }
