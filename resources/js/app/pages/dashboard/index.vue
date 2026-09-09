@@ -126,28 +126,28 @@ onMounted(async () => {
                 </button>
             </div>
 
-            <div class="mb-4 flex flex-wrap items-end gap-3">
+            <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div>
                     <label class="mb-1 block text-xs font-semibold text-text-muted">Yarda</label>
-                    <select v-model="filters.field_id" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
+                    <select v-model="filters.field_id" class="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
                         <option value="">Todas</option>
                         <option v-for="f in fields" :key="f.id" :value="f.id">{{ f.description }}</option>
                     </select>
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-semibold text-text-muted">Estado</label>
-                    <select v-model="filters.status_id" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
+                    <select v-model="filters.status_id" class="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
                         <option value="">Todos</option>
                         <option v-for="s in statuses" :key="s.id" :value="s.id">{{ s.description }}</option>
                     </select>
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-semibold text-text-muted">Desde</label>
-                    <input v-model="filters.from" type="date" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
+                    <input v-model="filters.from" type="date" class="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-semibold text-text-muted">Hasta</label>
-                    <input v-model="filters.to" type="date" class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
+                    <input v-model="filters.to" type="date" class="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text" @change="applyFilters">
                 </div>
             </div>
 
