@@ -57,9 +57,10 @@ class ReportController extends Controller
             'description' => $machine->description,
             'machinery_type' => $machine->machineryType->description,
             'last_report' => $machine->latestReport ? [
-                'status' => $machine->latestReport->status->description,
+                'status_id'    => $machine->latestReport->status_id,
+                'status'       => $machine->latestReport->status->description,
                 'status_class' => $machine->latestReport->status->semanticClass(),
-                'reported_at' => $machine->latestReport->created_at,
+                'reported_at'  => $machine->latestReport->created_at,
             ] : null,
         ]));
     }
@@ -97,6 +98,7 @@ class ReportController extends Controller
             'id' => $machine->id,
             'description' => $machine->description,
             'last_report' => $machine->latestReport ? [
+                'status_id'    => $machine->latestReport->status_id,
                 'status'       => $machine->latestReport->status->description,
                 'status_class' => $machine->latestReport->status->semanticClass(),
                 'reported_at'  => $machine->latestReport->created_at,
