@@ -48,7 +48,7 @@ const badgeClasses = {
                     <tr class="border-b border-border text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
                         <th class="w-8 px-4 py-2.5">#</th>
                         <th class="px-4 py-2.5">Máquina</th>
-                        <th class="px-4 py-2.5 text-right">Estado</th>
+                        <th class="px-4 py-2.5 text-center">Estado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -62,7 +62,7 @@ const badgeClasses = {
                             <p class="font-medium text-text">{{ m.machinery }}</p>
                             <p v-if="m.observation" class="mt-0.5 text-xs text-text-muted">{{ m.observation }}</p>
                         </td>
-                        <td class="px-4 py-2.5 text-right">
+                        <td class="px-4 py-2.5 text-center">
                             <span
                                 class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
                                 :class="badgeClasses[m.status_class] || badgeClasses.neutral"
