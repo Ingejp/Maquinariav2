@@ -43,37 +43,36 @@ const badgeClasses = {
             </div>
 
             <!-- Tabla de máquinas -->
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[480px] text-sm">
-                    <thead>
-                        <tr class="border-b border-border text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                            <th class="w-10 px-4 py-2.5">#</th>
-                            <th class="px-4 py-2.5">Máquina</th>
-                            <th class="px-4 py-2.5">Estado</th>
-                            <th class="px-4 py-2.5">Observación</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="(m, mi) in session.machines"
-                            :key="mi"
-                            class="border-b border-border last:border-0"
-                        >
-                            <td class="px-4 py-2.5 text-text-muted">{{ mi + 1 }}</td>
-                            <td class="px-4 py-2.5 font-medium text-text">{{ m.machinery }}</td>
-                            <td class="px-4 py-2.5">
-                                <span
-                                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-                                    :class="badgeClasses[m.status_class] || badgeClasses.neutral"
-                                >
-                                    {{ m.status }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-2.5 text-text-muted">{{ m.observation || '—' }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-border text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                        <th class="w-8 px-4 py-2.5">#</th>
+                        <th class="px-4 py-2.5">Máquina</th>
+                        <th class="px-4 py-2.5 text-right">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr
+                        v-for="(m, mi) in session.machines"
+                        :key="mi"
+                        class="border-b border-border last:border-0"
+                    >
+                        <td class="px-4 py-2.5 text-text-muted">{{ mi + 1 }}</td>
+                        <td class="px-4 py-2.5">
+                            <p class="font-medium text-text">{{ m.machinery }}</p>
+                            <p v-if="m.observation" class="mt-0.5 text-xs text-text-muted">{{ m.observation }}</p>
+                        </td>
+                        <td class="px-4 py-2.5 text-right">
+                            <span
+                                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                                :class="badgeClasses[m.status_class] || badgeClasses.neutral"
+                            >
+                                {{ m.status }}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </template>
