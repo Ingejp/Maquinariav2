@@ -60,6 +60,7 @@ class ReportController extends Controller
                 'status_id'    => $machine->latestReport->status_id,
                 'status'       => $machine->latestReport->status->description,
                 'status_class' => $machine->latestReport->status->semanticClass(),
+                'observation'  => $machine->latestReport->observation,
                 'reported_at'  => $machine->latestReport->created_at,
             ] : null,
         ]));
@@ -101,6 +102,7 @@ class ReportController extends Controller
                 'status_id'    => $machine->latestReport->status_id,
                 'status'       => $machine->latestReport->status->description,
                 'status_class' => $machine->latestReport->status->semanticClass(),
+                'observation'  => $machine->latestReport->observation,
                 'reported_at'  => $machine->latestReport->created_at,
             ] : null,
         ]));

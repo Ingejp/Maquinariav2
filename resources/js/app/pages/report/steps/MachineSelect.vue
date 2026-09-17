@@ -31,7 +31,7 @@ async function load() {
     typeName.value = types.find((t) => String(t.id) === String(props.typeId))?.description ?? '';
     machines.value = machineList;
     statuses.value = statusList;
-    forms.value = Object.fromEntries(machineList.map((m) => [m.id, { status_id: m.last_report?.status_id ?? '', observation: '' }]));
+    forms.value = Object.fromEntries(machineList.map((m) => [m.id, { status_id: m.last_report?.status_id ?? '', observation: m.last_report?.observation ?? '' }]));
     loading.value = false;
 }
 
