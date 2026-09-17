@@ -6,7 +6,7 @@ defineProps({
 
 function formatDateTime(value) {
     if (!value) return '';
-    return new Date(value).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' });
+    return new Date(value).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short', hour12: false });
 }
 
 const badgeClasses = {
