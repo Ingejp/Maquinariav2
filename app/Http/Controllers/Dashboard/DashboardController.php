@@ -229,6 +229,82 @@ class DashboardController extends Controller
     }
 
     /**
+     * Promedio diario de máquinas por estado para la semana ISO dada.
+     * Lógica: por cada sesión (campo+bucket 30 min) se cuentan las máquinas
+     * de cada estado; luego se promedian esos conteos entre todas las sesiones
+     * del mismo día.
+     */
+    public function weekly(Request $request): JsonResponse
+    {
+        $week = $request->integer('week') ?: (int) now()->format('W');
+        $year = $request->integer('year') ?: now()->year;
+
+        // Subquery: conteo por sesión
+        $inner = DB::table('report_status')
+            ->join('machinery', 'machinery.id', '=', 'report_status.machinery_id')
+            ->join('status',    'status.id',    '=', 'report_status.status_id')
+            ->whereRaw('WEEK(report_status.created_at, 1) = ?', [$week])
+            ->whereRaw('YEAR(report_status.created_at) = ?',    [$year])
+            ->when($request->integer('field_id'),          fn ($q, $id) => $q->where('machinery.field_id', $id))
+            ->when($request->integer('machinery_type_id'), fn ($q, $id) => $q->where('machinery.machinery_type_id', $id))
+            ->selectRaw("
+                DATE(report_status.created_at)                         AS day,
+                DAYOFWEEK(report_status.created_at)                    AS dow,
+                FLOOR(UNIX_TIMESTAMP(report_status.created_at) / 1800) AS bucket,
+                status.description                                     AS status_name,
+                CASE
+                    WHEN status.description LIKE '%NO OPERATIVA%' THEN 2
+                    WHEN status.description LIKE '%LIMITAC%'      THEN 1
+                    WHEN status.description LIKE '%OPERATIVA%'    THEN 0
+                    ELSE 3
+                END AS status_order,
+                COUNT(*) AS machine_count
+            ")
+            ->groupBy('day', 'dow', 'bucket', 'status_name', 'status_order');
+
+        // Outer query: promedio por día
+        $rows = DB::table(DB::raw("({$inner->toSql()}) as s"))
+            ->mergeBindings($inner)
+            ->selectRaw('day, dow, status_name, status_order, ROUND(AVG(machine_count), 1) AS avg_count')
+            ->groupBy('day', 'dow', 'status_name', 'status_order')
+            ->orderBy('day')
+            ->orderBy('status_order')
+            ->get();
+
+        // DAYOFWEEK: 1=Dom, 2=Lun, 3=Mar, 4=Mié, 5=Jue, 6=Vie, 7=Sáb
+        $dayNames = [1 => 'Dom', 2 => 'Lun', 3 => 'Mar', 4 => 'Mié', 5 => 'Jue', 6 => 'Vie', 7 => 'Sáb'];
+
+        $days        = $rows->pluck('day')->unique()->sort()->values();
+        $labels      = $days->map(fn ($d) => $dayNames[$rows->firstWhere('day', $d)->dow] ?? $d);
+        $statusNames = $rows->sortBy('status_order')->pluck('status_name')->unique()->values();
+
+        $semanticClass = fn ($name) => match (true) {
+            str_contains($name, 'NO OPERATIVA') => 'critical',
+            str_contains($name, 'LIMITAC')      => 'warn',
+            str_contains($name, 'OPERATIVA')    => 'good',
+            default                              => 'neutral',
+        };
+
+        $lookup = [];
+        foreach ($rows as $row) {
+            $lookup[$row->day][$row->status_name] = (float) $row->avg_count;
+        }
+
+        $datasets = $statusNames->map(fn ($name) => [
+            'label' => $name,
+            'class' => $semanticClass($name),
+            'data'  => $days->map(fn ($day) => $lookup[$day][$name] ?? 0)->values(),
+        ]);
+
+        return response()->json([
+            'week'     => $week,
+            'year'     => $year,
+            'labels'   => $labels->values(),
+            'datasets' => $datasets,
+        ]);
+    }
+
+    /**
      * Exporta los registros filtrados como CSV (Excel lo abre nativamente).
      * Columnas: # Horario Máquina Predio Limitante Semana Estatus Día Hora
      */

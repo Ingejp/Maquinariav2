@@ -20,6 +20,20 @@ const loadingChart = ref(true);
 const sessions = ref([]);
 const loadingSessions = ref(true);
 
+const weeklyData = ref(null);
+const loadingWeekly = ref(false);
+
+function currentWeekValue() {
+    const d = new Date();
+    const utc = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day = utc.getUTCDay() || 7;
+    utc.setUTCDate(utc.getUTCDate() + 4 - day);
+    const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+    const week = Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
+    return `${utc.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+const weekInput = ref(currentWeekValue());
+
 function cleanFilters() {
     const out = {};
     if (filters.value.field_id) out.field_id = filters.value.field_id;
@@ -60,9 +74,21 @@ async function loadSessions() {
     loadingSessions.value = false;
 }
 
+async function loadWeekly() {
+    if (!weekInput.value) return;
+    const [yearStr, weekStr] = weekInput.value.split('-W');
+    loadingWeekly.value = true;
+    const { data } = await http.get('/dashboard/datos/semanal', {
+        params: { week: Number(weekStr), year: Number(yearStr), ...cleanFilters() },
+    });
+    weeklyData.value = data;
+    loadingWeekly.value = false;
+}
+
 function applyFilters() {
     loadChart();
     loadSessions();
+    if (activeView.value === 'weekly') loadWeekly();
 }
 
 function exportExcel() {
@@ -129,6 +155,14 @@ onMounted(async () => {
                 >
                     Reporte
                 </button>
+                <button
+                    type="button"
+                    class="rounded-lg border px-4 py-2 text-sm font-semibold transition"
+                    :class="activeView === 'weekly' ? 'bg-accent border-accent text-white' : 'border-border text-text-muted hover:border-accent hover:text-accent'"
+                    @click="activeView = 'weekly'; loadWeekly()"
+                >
+                    Semanal
+                </button>
 
                 <button
                     type="button"
@@ -177,6 +211,29 @@ onMounted(async () => {
 
             <div v-if="activeView === 'table'">
                 <ReportSessions :sessions="sessions" :loading="loadingSessions" />
+            </div>
+
+            <div v-if="activeView === 'weekly'">
+                <!-- Selector de semana -->
+                <div class="mb-4 flex items-end gap-3">
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-text-muted">Semana</label>
+                        <input
+                            v-model="weekInput"
+                            type="week"
+                            class="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                            @change="loadWeekly"
+                        >
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-border bg-surface p-5">
+                    <h2 class="font-display text-base font-semibold text-text">Promedio diario por estado</h2>
+                    <p v-if="weeklyData" class="mb-4 text-xs text-text-muted">Semana {{ weeklyData.week }}, {{ weeklyData.year }}</p>
+                    <div v-if="loadingWeekly" class="py-10 text-center text-sm text-text-muted">Cargando…</div>
+                    <ReportsChart v-else-if="weeklyData && weeklyData.labels.length" :chart-data="weeklyData" />
+                    <p v-else-if="weeklyData" class="py-10 text-center text-sm text-text-muted">Sin datos para esta semana.</p>
+                </div>
             </div>
         </div>
 
