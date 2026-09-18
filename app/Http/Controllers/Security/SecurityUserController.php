@@ -49,6 +49,23 @@ class SecurityUserController extends Controller
         return (new SecurityUserResource($user->load('roles')))->response()->setStatusCode(201);
     }
 
+    public function updatePassword(Request $request, User $user): JsonResponse
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:10', 'confirmed'],
+        ]);
+
+        $user->update(['password' => $request->string('password')->value()]);
+
+        Log::info('Contraseña restablecida por admin', [
+            'actor_id'       => auth()->id(),
+            'target_user_id' => $user->id,
+            'username'       => $user->username,
+        ]);
+
+        return response()->json(['message' => 'Contraseña actualizada correctamente.']);
+    }
+
     public function updateRole(Request $request, User $user): SecurityUserResource
     {
         $validated = $request->validate([

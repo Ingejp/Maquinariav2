@@ -115,6 +115,7 @@ Route::middleware(['auth', 'throttle:120,1'])->group(function () {
             Route::get('/', [SecurityUserController::class, 'index'])->name('index');
             Route::post('/', [SecurityUserController::class, 'store'])->name('store');
             Route::patch('/{user}/rol', [SecurityUserController::class, 'updateRole'])->name('role');
+            Route::patch('/{user}/password', [SecurityUserController::class, 'updatePassword'])->name('password');
         });
     });
 });
