@@ -274,7 +274,7 @@ class DashboardController extends Controller
                 $dt = new \DateTime($row->created_at);
                 fputcsv($out, [
                     $i++,
-                    $dt->format('j/n/Y, H:i:s'),
+                    $dt->format('Y-m-d H:i:s'),
                     $row->machinery_name,
                     $row->field_name,
                     $row->observation ?? '',
