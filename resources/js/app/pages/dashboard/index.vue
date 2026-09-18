@@ -229,9 +229,60 @@ onMounted(async () => {
 
                 <div class="rounded-xl border border-border bg-surface p-5">
                     <h2 class="font-display text-base font-semibold text-text">Promedio diario por estado</h2>
-                    <p v-if="weeklyData" class="mb-4 text-xs text-text-muted">Semana {{ weeklyData.week }}, {{ weeklyData.year }}</p>
+                    <p v-if="weeklyData" class="mb-5 text-xs text-text-muted">Semana {{ weeklyData.week }}, {{ weeklyData.year }}</p>
+
                     <div v-if="loadingWeekly" class="py-10 text-center text-sm text-text-muted">Cargando…</div>
-                    <ReportsChart v-else-if="weeklyData && weeklyData.labels.length" :chart-data="weeklyData" />
+
+                    <div v-else-if="weeklyData && weeklyData.labels.length" class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <!-- Tabla (izquierda) -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-border text-left text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                                        <th class="py-2 pr-4">Día</th>
+                                        <th
+                                            v-for="ds in weeklyData.datasets"
+                                            :key="ds.label"
+                                            class="py-2 pr-4 text-center"
+                                            :class="{
+                                                'text-good':     ds.class === 'good',
+                                                'text-warn':     ds.class === 'warn',
+                                                'text-critical': ds.class === 'critical',
+                                            }"
+                                        >
+                                            {{ ds.label }}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        v-for="(label, i) in weeklyData.labels"
+                                        :key="label"
+                                        class="border-b border-border last:border-0"
+                                    >
+                                        <td class="py-2 pr-4 font-medium text-text">{{ label }}</td>
+                                        <td
+                                            v-for="ds in weeklyData.datasets"
+                                            :key="ds.label"
+                                            class="py-2 pr-4 text-center font-semibold"
+                                            :class="{
+                                                'text-good':     ds.class === 'good',
+                                                'text-warn':     ds.class === 'warn',
+                                                'text-critical': ds.class === 'critical',
+                                                'text-text-muted': ds.class === 'neutral',
+                                            }"
+                                        >
+                                            {{ Math.round(ds.data[i]) }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Gráfico (derecha) -->
+                        <ReportsChart :chart-data="weeklyData" />
+                    </div>
+
                     <p v-else-if="weeklyData" class="py-10 text-center text-sm text-text-muted">Sin datos para esta semana.</p>
                 </div>
             </div>

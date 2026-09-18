@@ -1,6 +1,9 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Chart from 'chart.js/auto';
+import DataLabelsPlugin from 'chartjs-plugin-datalabels';
+
+Chart.register(DataLabelsPlugin);
 
 const props = defineProps({
     chartData: {
@@ -34,12 +37,21 @@ function buildConfig() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: { padding: { top: 16 } },
             scales: {
                 x: { grid: { display: false } },
                 y: { beginAtZero: true, ticks: { precision: 0 } },
             },
             plugins: {
                 legend: { position: 'bottom' },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'end',
+                    offset: 2,
+                    color: '#6b7280',
+                    font: { size: 10, weight: 'bold' },
+                    formatter: (value) => value > 0 ? Math.round(value) : '',
+                },
             },
         },
     };
