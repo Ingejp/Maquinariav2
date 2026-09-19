@@ -6,7 +6,13 @@ defineProps({
 
 function formatDateTime(value) {
     if (!value) return '';
-    return new Date(value).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short', hour12: false });
+    const iso = value.includes('T') ? value : value.replace(' ', 'T') + 'Z';
+    return new Date(iso).toLocaleString('es-GT', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        hour12: false,
+        timeZone: 'America/Guatemala',
+    });
 }
 
 const badgeClasses = {
